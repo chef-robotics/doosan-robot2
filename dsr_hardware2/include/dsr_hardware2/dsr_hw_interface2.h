@@ -478,7 +478,10 @@ unsigned int m_rate;
 unsigned int m_standby;
 bool m_command;
 unsigned int m_port;
+// WTF doosan, this never publishes?
 rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr m_joint_state_pub_;
+rclcpp::Publisher<dsr_msgs2::msg::ServojRtStream>::SharedPtr m_robot_state_pub_;
+
 typedef struct _ROBOT_JOINT_DATA
 {
     double cmd;
@@ -555,6 +558,8 @@ public:
     static void OnMonitoringStateCB(const ROBOT_STATE eState);
     static void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
     static void OnLogAlarm(LPLOG_ALARM pLogAlarm);
+
+    void MsgPublisher_RobotState();
 
 };
 #endif // end

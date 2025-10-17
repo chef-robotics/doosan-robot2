@@ -654,7 +654,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 DRHWInterface::~DRHWInterface()
 {
     Drfl.stop_rt_control();
-    Drfl.disconnect_rt_control();
+    // Drfl.disconnect_rt_control();
     Drfl.close_connection();
 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
@@ -1118,6 +1118,146 @@ void DSRInterface::OnLogAlarm(LPLOG_ALARM pLogAlarm)
     msg.msg3=g_stDrError.strMsg3;
 
     PubRobotError->publish(msg);
+}
+
+// temp: copied from ROS1
+void DSRInterface::MsgPublisher_RobotState()
+{
+    dsr_msgs2::msg::RobotState msg;
+    // dsr_msgs2::ModbusState modbus_state;
+
+    msg.robot_state         = g_stDrState.nRobotState;
+    msg.robot_state_str     = g_stDrState.strRobotState;
+    msg.actual_mode         = g_stDrState.nActualMode;
+    msg.actual_space        = g_stDrState.nActualSpace;
+
+    for (int i = 0; i < NUM_JOINT; i++)
+    {
+        msg.current_posj[i]    = g_stDrState.fCurrentPosj[i];
+        msg.current_velj[i]    = g_stDrState.fCurrentVelj[i];
+        msg.joint_abs[i]       = g_stDrState.fJointAbs[i];
+        msg.joint_err[i]       = g_stDrState.fJointErr[i];
+        msg.target_posj[i]     = g_stDrState.fTargetPosj[i];
+        msg.target_velj[i]     = g_stDrState.fTargetVelj[i];
+
+        msg.current_posx[i]      = g_stDrState.fCurrentPosx[i];
+        msg.current_tool_posx[i] = g_stDrState.fCurrentToolPosx[i];
+        msg.current_velx[i]    = g_stDrState.fCurrentVelx[i];
+        msg.task_err[i]        = g_stDrState.fTaskErr[i];
+        msg.target_velx[i]     = g_stDrState.fTargetVelx[i];
+        msg.target_posx[i]     = g_stDrState.fTargetPosx[i];
+
+        msg.dynamic_tor[i]     = g_stDrState.fDynamicTor[i];
+        msg.actual_jts[i]      = g_stDrState.fActualJTS[i];
+        msg.actual_ejt[i]      = g_stDrState.fActualEJT[i];
+        msg.actual_ett[i]      = g_stDrState.fActualETT[i];
+
+
+        msg.actual_bk[i]       = g_stDrState.nActualBK[i];
+        msg.actual_mc[i]       = g_stDrState.fActualMC[i];
+        msg.actual_mt[i]       = g_stDrState.fActualMT[i];
+    }
+    msg.solution_space      = g_stDrState.nSolutionSpace;
+    msg.sync_time           = g_stDrState.dSyncTime;
+    std_msgs::msg::Float64MultiArray arr;
+
+    for (int i = 0; i < 3; i++){
+        arr.data.clear();
+        for (int j = 0; j < 3; j++){
+            arr.data.push_back(g_stDrState.fRotationMatrix[i][j]);
+        }
+        msg.rotation_matrix.push_back(arr);
+    }
+
+    for (int i = 0; i < NUM_BUTTON; i++){
+        msg.actual_bt[i] = g_stDrState.nActualBT[i];
+    }
+    for (int i = 0; i < NUM_DIGITAL; i++){
+        msg.ctrlbox_digital_input[i]    = g_stDrState.bCtrlBoxDigitalInput[i];
+        msg.ctrlbox_digital_output[i]   = g_stDrState.bCtrlBoxDigitalOutput[i];
+    }
+    for (int i = 0; i < NUM_FLANGE_IO; i++){
+        msg.flange_digital_input[i]     = g_stDrState.bFlangeDigitalInput[i];
+        msg.flange_digital_output[i]    = g_stDrState.bFlangeDigitalOutput[i];
+    }
+    // //msg.io_modbus;    GJH
+    // for (int i = 0; i < g_stDrState.nRegCount; i++){
+    //     modbus_state.modbus_symbol   = g_stDrState.strModbusSymbol[i];
+    //     modbus_state.modbus_value    = g_stDrState.nModbusValue[i];
+    //     msg.modbus_state.push_back(modbus_state);
+    // }
+    //msg.error;        GJH
+    msg.access_control      = g_stDrState.nAccessControl;
+    msg.homming_completed   = g_stDrState.bHommingCompleted;
+    msg.tp_initialized      = g_stDrState.bTpInitialized;
+    msg.mastering_need      = g_stDrState.bMasteringNeed;
+    msg.drl_stopped         = g_stDrState.bDrlStopped;
+    msg.disconnected        = g_stDrState.bDisconnected;
+
+    //--- The following messages have been updated since version M2.50 or higher ---
+    if(m_nVersionDRCF >= 120500)    //M2.5 or later
+    {
+        for (int i = 0; i < NUM_JOINT; i++){      
+            msg.f_actual_w2b[i] = g_stDrState.fActualW2B[i];
+            msg.f_current_vel_world[i] = g_stDrState.fCurrentVelW[i];
+            msg.f_world_ext_target_torque[i] = g_stDrState.fWorldETT[i];
+            msg.f_target_pos_world[i] = g_stDrState.fTargetPosW[i];
+            msg.f_target_vel_world[i] = g_stDrState.fTargetVelW[i];
+            msg.f_current_vel_user[i] = g_stDrState.fCurrentVelU[i];
+            msg.f_user_ext_task_torque[i] = g_stDrState.fUserETT[i];
+            msg.f_target_pos_user[i] = g_stDrState.fTargetPosU[i];
+            msg.f_target_vel_user[i] = g_stDrState.fTargetVelU[i];
+        }
+        for(int i = 0; i < 2; i++){
+            arr.data.clear();
+            for(int j = 0; j < 6; j++){
+                arr.data.push_back(g_stDrState.fCurrentPosW[i][j]);
+            }
+            msg.f_current_pos_world.push_back(arr);
+        }
+        for(int i = 0; i < 2; i++){
+            arr.data.clear();
+            for(int j = 0; j < 6; j++){
+                arr.data.push_back(g_stDrState.fCurrentPosU[i][j]);
+            }
+            msg.f_current_pos_user.push_back(arr);
+        }
+        for(int i = 0; i < 3; i++){
+            arr.data.clear();
+            for(int j = 0; j < 3; j++){
+                arr.data.push_back(g_stDrState.fRotationMatrixWorld[i][j]);
+            }
+            msg.f_rotation_matrix_world.push_back(arr);
+        }
+        for(int i = 0; i < 3; i++){
+            arr.data.clear();
+            for(int j = 0; j < 3; j++){
+                arr.data.push_back(g_stDrState.fRotationMatrixUser[i][j]);
+            }
+            msg.f_rotation_matrix_user.push_back(arr);
+        }
+
+        msg.i_actual_user_coord_num = g_stDrState.iActualUCN;
+        msg.i_coord_ref    = g_stDrState.iParent; //probably?
+
+        for (int i = 0; i < 3; i++)
+            msg.b_actual_switch_input[i] = g_stDrState.bActualSW[i];
+
+        for (int i = 0; i < 2; i++){
+            msg.b_actual_safety_input[i] = g_stDrState.bActualSI[i];
+            msg.i_actual_analog_input_type[i] = g_stDrState.fActualAI[i];
+            msg.i_actual_analog_input_type[i] = g_stDrState.iActualAT[i];
+            msg.i_target_analog_output_type[i] = g_stDrState.fTargetAO[i];
+            msg.i_target_analog_output_type[i] = g_stDrState.iTargetAT[i];
+            msg.b_actual_encorder_strove_signal[i] = g_stDrState.bActualES[i];
+            msg.i_actual_encorder_raw_data[i] = g_stDrState.iActualED[i];
+            msg.b_actual_encorder_reset_signal[i] = g_stDrState.bActualER[i];
+        }
+    }
+    //------------------------------------------------------------------------------
+
+    // m_PubRobotState.publish(msg);
+
 }
 
 

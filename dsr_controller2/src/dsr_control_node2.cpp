@@ -40,14 +40,14 @@ class MyNode : public rclcpp::Node {
 public:
     MyNode() : Node("my_node") {
         // 파라미터 선언
-        declare_parameter("name", "dsr01");
+        declare_parameter("name", "m01");
         declare_parameter("rate", 100);
         declare_parameter("standby", 5000);
         declare_parameter("command", true);
-        declare_parameter("host", "127.0.0.1");
+        declare_parameter("host", "192.168.1.200");
         declare_parameter("port", 12345);
-        declare_parameter("mode", "virtual");
-        declare_parameter("model", "m1013");
+        declare_parameter("mode", "real");
+        declare_parameter("model", "a0509");
         declare_parameter("gripper", "none");
         declare_parameter("mobile", "none");
 
