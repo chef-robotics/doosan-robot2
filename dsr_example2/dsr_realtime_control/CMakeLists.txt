@@ -29,11 +29,11 @@ include_directories(
 
 LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
 
-if($ENV{ROS_DISTRO} STREQUAL "humble")                          
-  LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
+set(COMMON_LIB_DIR "${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/${CMAKE_SYSTEM_PROCESSOR}")
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${COMMON_LIB_DIR}")
+  LINK_DIRECTORIES("${COMMON_LIB_DIR}")
 else()
-  message("Unknown ROS distro:")
-  message($ENV{ROS_DISTRO})
+  message(FATAL_ERROR "Unknown ROS distro/architecture: $ENV{ROS_DISTRO}/${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 add_executable(dsr_realtime_control src/realtime_control.cpp)

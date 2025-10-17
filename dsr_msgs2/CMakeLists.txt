@@ -177,7 +177,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/realtime/StopRtControl.srv"
   "srv/realtime/WriteDataRt.srv"
 
-  DEPENDENCIES builtin_interfaces std_msgs  
+  DEPENDENCIES builtin_interfaces std_msgs service_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)

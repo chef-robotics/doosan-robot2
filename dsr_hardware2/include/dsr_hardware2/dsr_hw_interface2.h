@@ -49,6 +49,7 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
+
 #include "../../../dsr_common2/include/DRFLEx.h"
 
 
@@ -58,7 +59,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 
 namespace dsr_hardware2{
 
-class HARDWARE_INTERFACE_PUBLIC DRHWInterface : public hardware_interface::SystemInterface
+class DRHWInterface : public hardware_interface::SystemInterface
 {
 public:
     CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
