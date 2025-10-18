@@ -180,5 +180,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES builtin_interfaces std_msgs service_msgs
 )
 
+install(
+  FILES ros1_to_ros2.yaml
+  DESTINATION share/${PROJECT_NAME})
+
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()

@@ -30,7 +30,7 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
 endforeach()
 
 if(NOT DEFINED DRCF_VER)
-        set(DRCF_VER 2)
+        set(DRCF_VER 3)
 endif()
 message(DRCF_VERSION : ${DRCF_VER})
 

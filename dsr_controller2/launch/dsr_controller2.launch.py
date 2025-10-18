@@ -20,22 +20,28 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+import os
+from ament_index_python.packages import get_package_share_directory
 
-ARGUMENTS = [
-    DeclareLaunchArgument(
-        'model',
-        default_value='m1013',
-        description='Robot Model'
-    ),
-    DeclareLaunchArgument(
-        'color',
-        default_value='white',
-        description='Robot Color'
-    ),
-    DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
-    ]	
+
 
 def generate_launch_description():
+    # Get URDF via xacro
+    ARGUMENTS =[ 
+        DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
+        DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
+        DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
+        DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
+        DeclareLaunchArgument('model', default_value = 'a0509',     description = 'ROBOT_MODEL'    ),
+        DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
+        DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
+        DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
+        DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+        
+    ]
+    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
+    # gui = LaunchConfiguration("gui")
+    
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -45,11 +51,26 @@ def generate_launch_description():
                 [
                     FindPackageShare("dsr_description2"),
                     "xacro",
-                    "m1013.urdf.xacro",
+                    LaunchConfiguration('model'),
                 ]
             ),
+            ".urdf.xacro",
+            " name:=", LaunchConfiguration('name'),
+            " host:=", LaunchConfiguration('host'),
+            " rt_host:=", LaunchConfiguration('rt_host'),
+            " port:=", LaunchConfiguration('port'),
+            " mode:=", LaunchConfiguration('mode'),
+            " model:=", LaunchConfiguration('model'),
         ]
     )
+    # why is this even needed!?
+    static_transform_publisher = Node(package='tf2_ros',
+                     executable='static_transform_publisher',
+                     name='static_transform_publisher',
+                             namespace=LaunchConfiguration('name'),
+
+                     output='log',
+                     arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'm01/base', 'm01/base_link'])
 
     robot_description = {"robot_description": robot_description_content}
 
@@ -59,9 +80,6 @@ def generate_launch_description():
             "config",
             "dsr_controller2.yaml",
         ]
-    )
-    rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
 
     control_node = Node(
@@ -76,6 +94,7 @@ def generate_launch_description():
             ),
         ],
         output="both",
+
     )
     robot_state_pub_node = Node(
         package="robot_state_publisher",
@@ -83,42 +102,50 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         
         output="both",
+        parameters=[robot_description, {"frame_prefix": "m01/"}],
         remappings=[
             (
-                "/joint_states",
-                "/dsr/joint_states",
+                "/tf",
+                "/dont_publish_tf_lol",
             ),
         ],
-        parameters=[robot_description],
-    )
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        namespace=LaunchConfiguration('name'),
-        output="log",
-        arguments=["-d", rviz_config_file],
     )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
+        parameters=[robot_description],
     )
+
+    joint_state_remap =        Node(
+            package='topic_tools',
+            executable='relay',
+            name='topic_relay',
+
+            arguments=['/m01/dsr/joint_states', '/m01/joint_states']
+        )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "/controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager"],
     )
     
     joint_trajectory_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "/controller_manager"],
+        arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
+    )
+
+    dsr_moveit_controller_spawner = Node(
+        package="controller_manager",
+        namespace=LaunchConfiguration('name'),
+        executable="spawner",
+        arguments=["dsr_moveit_controller", "-c", "controller_manager"],
     )
 
     # joint_state_publisher_spawner = Node(
@@ -128,12 +155,6 @@ def generate_launch_description():
     # )
 
     # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[rviz_node],
-        )
-    )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -155,9 +176,12 @@ def generate_launch_description():
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
+        joint_state_remap,
+        # static_transform_publisher,
         # joint_state_publisher_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        # joint_trajectory_controller_spawner,
+        dsr_moveit_controller_spawner,
         # delay_robot_controller_spawner_after_joint_trajectory_controller_spawner,
     ]
 

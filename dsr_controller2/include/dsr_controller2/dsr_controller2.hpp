@@ -541,7 +541,11 @@ public:
 
   controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
+
+  void publish_robot_state();
   
+    
+  rclcpp::Publisher<dsr_msgs2::msg::RobotState>::SharedPtr robot_state_pub_;
   rclcpp::Publisher<dsr_msgs2::msg::RobotDisconnection>::SharedPtr disconnect_pub_;
   rclcpp::Publisher<dsr_msgs2::msg::RobotError>::SharedPtr error_log_pub_;
 protected:
