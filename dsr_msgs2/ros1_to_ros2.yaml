@@ -67,3 +67,51 @@
     fCurrentPosU: 'f_current_pos_user'
     fRotationMatrixWorld: 'f_rotation_matrix_world'
     fRotationMatrixUser: 'f_rotation_matrix_user'
+
+-
+# FollowJointTrajectory in ros2 had multi dof stuff added to it.  Map the things that are similar.
+# Unmapped fields will be ignored
+    enable_foreign_mappings: true
+    ros1_package_name: 'control_msgs'
+    ros1_action_name: 'FollowJointTrajectory'
+    ros2_package_name: 'control_msgs' 
+    ros2_action_name: 'FollowJointTrajectory'
+    goal_fields_1_to_2:
+        trajectory: 'trajectory'
+        path_tolerance: 'path_tolerance'
+        goal_tolerance: 'goal_tolerance'
+        goal_time_tolerance: 'goal_time_tolerance'
+    result_fields_1_to_2:
+        error_code: 'error_code'
+        error_string: 'error_string'
+    feedback_fields_1_to_2:
+        header: 'header'
+        joint_names: 'joint_names'
+        desired: 'desired'
+        actual: 'actual'
+        error: 'error'
+-
+    allow_missing: true
+    enable_foreign_mappings: true
+    ros1_package_name: 'controller_manager_msgs'
+    ros1_message_name: 'ControllerState'
+    ros2_package_name: 'controller_manager_msgs' 
+    ros2_message_name: 'ControllerState'
+    fields_1_to_2:
+      name: 'name'
+      state: state
+      type: type
+-
+    allow_missing: true
+    enable_foreign_mappings: true
+    ros1_package_name: 'controller_manager_msgs'
+    ros1_service_name: 'SwitchController'
+    ros2_package_name: 'controller_manager_msgs' 
+    ros2_service_name: 'SwitchController'
+    request_fields_1_to_2:
+      start_controllers: activate_controllers
+      stop_controllers: deactivate_controllers
+      start_asap: activate_asap
+      timeout: timeout
+    response_fields_1_to_2:
+      ok: ok

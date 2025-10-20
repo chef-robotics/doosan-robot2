@@ -148,6 +148,13 @@ def generate_launch_description():
         arguments=["dsr_moveit_controller", "-c", "controller_manager"],
     )
 
+    dsr_position_controller_spawner = Node(
+        package="controller_manager",
+        namespace=LaunchConfiguration('name'),
+        executable="spawner",
+        arguments=["dsr_position_controller", "-c", "controller_manager"],
+    )
+
     # joint_state_publisher_spawner = Node(
     #     package="controller_manager",
     #     executable="spawner",
@@ -172,6 +179,8 @@ def generate_launch_description():
         )
     )
 
+
+
     nodes = [
         control_node,
         robot_state_pub_node,
@@ -180,6 +189,7 @@ def generate_launch_description():
         # static_transform_publisher,
         # joint_state_publisher_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        dsr_position_controller_spawner,
         # joint_trajectory_controller_spawner,
         dsr_moveit_controller_spawner,
         # delay_robot_controller_spawner_after_joint_trajectory_controller_spawner,
